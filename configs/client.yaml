@@ -1,0 +1,30 @@
+# ShareSerial Client Configuration
+
+# Server connection configuration
+server:
+  # Server IP address
+  address: "192.168.1.100"
+  # Server port
+  port: 7700
+
+# Virtual serial port configuration
+pty:
+  # Virtual serial port symlink path
+  path: "/dev/vttyShare0"
+  # Fixed baudrate (Phase 1 only supports 115200)
+  baudrate: 115200
+
+# Reconnection configuration
+reconnect:
+  # Enable auto reconnect
+  enabled: true
+  # Reconnect interval in seconds
+  interval: 1
+  # Max retry count (0 for infinite)
+  max_retry: 0
+
+# Logging configuration
+log:
+  level: "info"
+  # Output file (leave empty for stdout)
+  file: ""

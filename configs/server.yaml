@@ -1,0 +1,34 @@
+# ShareSerial Server Configuration
+
+# Serial port configuration
+serial:
+  # Physical serial port path
+  path: "/dev/ttyUSB0"
+  # Fixed baudrate (Phase 1 only supports 115200)
+  baudrate: 115200
+  # Data bits (fixed)
+  databits: 8
+  # Stop bits (fixed)
+  stopbits: 1
+  # Parity (fixed: none)
+  parity: "none"
+
+# TCP server configuration
+server:
+  # Listen port
+  port: 7700
+  # Listen address (0.0.0.0 for all interfaces)
+  address: "0.0.0.0"
+
+# Write lock arbitration configuration
+arbiter:
+  # Lock timeout in seconds
+  timeout: 30
+  # Auto-release on disconnect
+  auto_release: true
+
+# Logging configuration
+log:
+  level: "info"
+  # Output file (leave empty for stdout)
+  file: ""
