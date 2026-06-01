@@ -8,9 +8,9 @@ import (
 
 // 串口配置常量
 const (
-	BaudRate   = 115200 // 固定波特率
-	DataBits   = 8
-	StopBits   = 1
+	BaudRate = 115200 // 固定波特率
+	DataBits = 8
+	StopBits = 1
 )
 
 // Parity 校验位类型
@@ -24,20 +24,20 @@ const (
 
 // Config 串口配置
 type Config struct {
-	BaudRate  int
-	DataBits  int
-	StopBits  int
-	Parity    Parity
+	BaudRate    int
+	DataBits    int
+	StopBits    int
+	Parity      Parity
 	ReadTimeout int
 }
 
 // DefaultConfig 返回默认配置（Phase 1 固定配置）
 func DefaultConfig() *Config {
 	return &Config{
-		BaudRate:  BaudRate,
-		DataBits:  DataBits,
-		StopBits:  StopBits,
-		Parity:    ParityNone,
+		BaudRate:    BaudRate,
+		DataBits:    DataBits,
+		StopBits:    StopBits,
+		Parity:      ParityNone,
 		ReadTimeout: 0, // 无超时
 	}
 }
@@ -53,10 +53,10 @@ type Port interface {
 
 // Handler 串口处理器
 type Handler struct {
-	port        Port
-	config      *Config
-	writeOwner  string
-	mu          sync.Mutex
+	port       Port
+	config     *Config
+	writeOwner string
+	mu         sync.Mutex
 }
 
 // NewHandler 创建串口处理器
@@ -138,17 +138,17 @@ func (h *Handler) IsOpen() bool {
 
 // MockSerialPort Mock 串口（用于测试）
 type MockSerialPort struct {
-	mu          sync.Mutex
-	open        bool
-	path        string
-	inputBuffer []byte
+	mu           sync.Mutex
+	open         bool
+	path         string
+	inputBuffer  []byte
 	outputBuffer []byte
 }
 
 // NewMockSerialPort 创建 Mock 串口
 func NewMockSerialPort() *MockSerialPort {
 	return &MockSerialPort{
-		inputBuffer: make([]byte, 0),
+		inputBuffer:  make([]byte, 0),
 		outputBuffer: make([]byte, 0),
 	}
 }

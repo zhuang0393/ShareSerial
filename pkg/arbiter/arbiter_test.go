@@ -31,7 +31,7 @@ func TestArbiterAcquireLockAlreadyLocked(t *testing.T) {
 	arbiter := NewArbiter(30 * time.Second)
 
 	// Client1 获取锁
-	arbiter.Acquire("client1")
+	_, _ = arbiter.Acquire("client1")
 
 	// Client2 尝试获取锁
 	ok, err := arbiter.Acquire("client2")
@@ -51,7 +51,7 @@ func TestArbiterReleaseLock(t *testing.T) {
 	arbiter := NewArbiter(30 * time.Second)
 
 	// Client1 获取锁
-	arbiter.Acquire("client1")
+	_, _ = arbiter.Acquire("client1")
 
 	// Client1 释放锁
 	err := arbiter.Release("client1")
@@ -71,7 +71,7 @@ func TestArbiterReleaseLockNotOwner(t *testing.T) {
 	arbiter := NewArbiter(30 * time.Second)
 
 	// Client1 获取锁
-	arbiter.Acquire("client1")
+	_, _ = arbiter.Acquire("client1")
 
 	// Client2 尝试释放锁
 	err := arbiter.Release("client2")
@@ -172,11 +172,11 @@ func TestArbiterExtendTimeout(t *testing.T) {
 	arbiter := NewArbiter(100 * time.Millisecond)
 
 	// Client1 获取锁
-	arbiter.Acquire("client1")
+	_, _ = arbiter.Acquire("client1")
 
 	// 在超时前延长
 	time.Sleep(50 * time.Millisecond)
-	arbiter.ExtendTimeout("client1", 200*time.Millisecond)
+	_ = arbiter.ExtendTimeout("client1", 200*time.Millisecond)
 
 	// 原超时时间后，锁仍存在
 	time.Sleep(100 * time.Millisecond)

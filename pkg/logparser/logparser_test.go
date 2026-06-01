@@ -31,8 +31,8 @@ func TestLogEntryLevel(t *testing.T) {
 	parser := NewParser()
 
 	tests := []struct {
-		line   string
-		level  string
+		line  string
+		level string
 	}{
 		{"[17:30:00] INFO: message", "INFO"},
 		{"[17:30:00] WARN: message", "WARN"},

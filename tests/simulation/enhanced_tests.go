@@ -165,8 +165,8 @@ func TestSimulationHighFrequencyPressure(t *testing.T) {
 	dg := NewDataGenerator(vsp)
 
 	// 测试参数
-	testLines := 1000    // 生成 1000 行数据
-	testInterval := 5    // 每 5ms 一行（高频率）
+	testLines := 1000 // 生成 1000 行数据
+	testInterval := 5 // 每 5ms 一行（高频率）
 
 	start := time.Now()
 	if err := dg.GenerateHighFrequencyData(testLines, testInterval); err != nil {
@@ -175,7 +175,7 @@ func TestSimulationHighFrequencyPressure(t *testing.T) {
 	elapsed := time.Since(start)
 
 	// 5. 计算吞吐量
- throughput := float64(testLines) / elapsed.Seconds()
+	throughput := float64(testLines) / elapsed.Seconds()
 
 	// 6. 验证结果
 	t.Logf("High frequency pressure test:")

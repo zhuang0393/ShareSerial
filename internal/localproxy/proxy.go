@@ -28,9 +28,9 @@ type LocalProxy struct {
 func NewLocalProxy(localPort int) *LocalProxy {
 	return &LocalProxy{
 		localAddr:    fmt.Sprintf("127.0.0.1:%d", localPort),
-		localPort:   localPort,
-		stopChan:    make(chan struct{}),
-		localConns:  make(map[net.Conn]bool),
+		localPort:    localPort,
+		stopChan:     make(chan struct{}),
+		localConns:   make(map[net.Conn]bool),
 		remoteBuffer: make([]byte, 0, 1024*1024), // 1MB 缓冲
 	}
 }

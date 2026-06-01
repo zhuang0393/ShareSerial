@@ -112,13 +112,13 @@ func main() {
 
 // ConnectionManager 连接管理器（简化版重连）
 type ConnectionManager struct {
-	mu           sync.Mutex
-	serverAddr   string
-	conn         net.Conn
-	running      bool
-	maxRetry     int
+	mu            sync.Mutex
+	serverAddr    string
+	conn          net.Conn
+	running       bool
+	maxRetry      int
 	retryInterval time.Duration
-	stopChan     chan struct{}
+	stopChan      chan struct{}
 }
 
 // NewConnectionManager 创建连接管理器

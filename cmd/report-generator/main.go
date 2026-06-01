@@ -13,38 +13,38 @@ import (
 
 // TestReport 测试报告结构
 type TestReport struct {
-	Timestamp     string        `json:"timestamp"`
-	GitCommit     string        `json:"git_commit"`
-	GitBranch     string        `json:"git_branch"`
-	GoVersion     string        `json:"go_version"`
-	Summary       TestSummary   `json:"summary"`
-	TestSuites    []TestSuite   `json:"test_suites"`
-	BuildArtifacts []BuildInfo  `json:"build_artifacts"`
-	Environment   Environment   `json:"environment"`
+	Timestamp      string      `json:"timestamp"`
+	GitCommit      string      `json:"git_commit"`
+	GitBranch      string      `json:"git_branch"`
+	GoVersion      string      `json:"go_version"`
+	Summary        TestSummary `json:"summary"`
+	TestSuites     []TestSuite `json:"test_suites"`
+	BuildArtifacts []BuildInfo `json:"build_artifacts"`
+	Environment    Environment `json:"environment"`
 }
 
 // TestSummary 测试摘要
 type TestSummary struct {
-	TotalTests    int     `json:"total_tests"`
-	PassedTests   int     `json:"passed_tests"`
-	FailedTests   int     `json:"failed_tests"`
-	SkippedTests  int     `json:"skipped_tests"`
-	PassRate      float64 `json:"pass_rate"`
-	Duration      string  `json:"duration"`
-	Status        string  `json:"status"` // "passed", "failed", "partial"
+	TotalTests   int     `json:"total_tests"`
+	PassedTests  int     `json:"passed_tests"`
+	FailedTests  int     `json:"failed_tests"`
+	SkippedTests int     `json:"skipped_tests"`
+	PassRate     float64 `json:"pass_rate"`
+	Duration     string  `json:"duration"`
+	Status       string  `json:"status"` // "passed", "failed", "partial"
 }
 
 // TestSuite 测试套件
 type TestSuite struct {
-	Name         string       `json:"name"`
-	Package      string       `json:"package"`
-	TotalTests   int          `json:"total_tests"`
-	PassedTests  int          `json:"passed_tests"`
-	FailedTests  int          `json:"failed_tests"`
-	SkippedTests int          `json:"skipped_tests"`
-	Duration     string       `json:"duration"`
-	TestCases    []TestCase   `json:"test_cases"`
-	Status       string       `json:"status"`
+	Name         string     `json:"name"`
+	Package      string     `json:"package"`
+	TotalTests   int        `json:"total_tests"`
+	PassedTests  int        `json:"passed_tests"`
+	FailedTests  int        `json:"failed_tests"`
+	SkippedTests int        `json:"skipped_tests"`
+	Duration     string     `json:"duration"`
+	TestCases    []TestCase `json:"test_cases"`
+	Status       string     `json:"status"`
 }
 
 // TestCase 测试用例
@@ -96,10 +96,10 @@ func (rg *ReportGenerator) ParseTestLog(logPath string) (*TestSuite, error) {
 
 	lines := strings.Split(string(content), "\n")
 	suite := &TestSuite{
-		Package:     strings.TrimSuffix(filepath.Base(logPath), ".log"),
-		TestCases:   make([]TestCase, 0),
-		PassedTests: 0,
-		FailedTests: 0,
+		Package:      strings.TrimSuffix(filepath.Base(logPath), ".log"),
+		TestCases:    make([]TestCase, 0),
+		PassedTests:  0,
+		FailedTests:  0,
 		SkippedTests: 0,
 	}
 
@@ -156,8 +156,8 @@ func extractDuration(line string) string {
 // GenerateReport 生成测试报告
 func (rg *ReportGenerator) GenerateReport() (*TestReport, error) {
 	report := &TestReport{
-		Timestamp: time.Now().Format("2006-01-02 15:04:05"),
-		TestSuites: make([]TestSuite, 0),
+		Timestamp:      time.Now().Format("2006-01-02 15:04:05"),
+		TestSuites:     make([]TestSuite, 0),
 		BuildArtifacts: make([]BuildInfo, 0),
 	}
 

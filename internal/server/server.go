@@ -241,13 +241,13 @@ func generateClientID(conn net.Conn) string {
 // MockServer Mock 服务器（用于测试）
 // 注意：MockServer 有最大容量限制（MaxBufferSize），防止内存无限增长
 type MockServer struct {
-	mu           sync.Mutex
-	running      bool
-	addr         string
-	listener     net.Listener
-	clients      map[string]net.Conn
-	arbiter      *arbiter.Arbiter
-	data         []byte
+	mu            sync.Mutex
+	running       bool
+	addr          string
+	listener      net.Listener
+	clients       map[string]net.Conn
+	arbiter       *arbiter.Arbiter
+	data          []byte
 	MaxBufferSize int // 最大缓冲区大小（字节），超过后丢弃旧数据
 }
 
@@ -257,9 +257,9 @@ const DefaultServerMaxBufferSize = 1 * 1024 * 1024
 // NewMockServer 创建 Mock 服务器
 func NewMockServer() *MockServer {
 	return &MockServer{
-		clients:      make(map[string]net.Conn),
-		arbiter:      arbiter.NewArbiter(30 * time.Second),
-		data:         make([]byte, 0),
+		clients:       make(map[string]net.Conn),
+		arbiter:       arbiter.NewArbiter(30 * time.Second),
+		data:          make([]byte, 0),
 		MaxBufferSize: DefaultServerMaxBufferSize,
 	}
 }

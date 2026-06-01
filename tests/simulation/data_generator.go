@@ -8,13 +8,13 @@ import (
 
 // DataGenerator 模拟开发板数据生成器
 type DataGenerator struct {
-	mu           sync.Mutex
-	vsp          *VirtualSerialPair
-	running      bool
-	stopChan     chan struct{}
-	lineCount    int
-	patterns     []LogPattern
-	customData   []string
+	mu         sync.Mutex
+	vsp        *VirtualSerialPair
+	running    bool
+	stopChan   chan struct{}
+	lineCount  int
+	patterns   []LogPattern
+	customData []string
 }
 
 // LogPattern 日志模式配置

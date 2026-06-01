@@ -88,7 +88,7 @@ func TestStabilityMemoryLeak(t *testing.T) {
 		data := fmt.Sprintf("[17:30:%02d] INFO: Memory test line %d\n", i%60, i)
 		srv.Broadcast([]byte(data))
 
-		if i % 1000 == 0 {
+		if i%1000 == 0 {
 			// 手动 GC
 			runtime.GC()
 		}
@@ -147,7 +147,7 @@ func TestStabilityHighFrequency(t *testing.T) {
 	elapsed := time.Since(start)
 
 	// 计算吞吐量
- throughput := float64(count * 1024) / elapsed.Seconds()
+	throughput := float64(count*1024) / elapsed.Seconds()
 
 	t.Logf("High frequency test: %d broadcasts in %v, throughput=%.2f KB/s", count, elapsed, throughput)
 

@@ -7,9 +7,9 @@ import (
 )
 
 var (
-	ErrLockAlreadyHeld    = errors.New("lock is already held by another client")
-	ErrNotLockOwner       = errors.New("client is not the lock owner")
-	ErrLockNotHeld        = errors.New("lock is not currently held")
+	ErrLockAlreadyHeld = errors.New("lock is already held by another client")
+	ErrNotLockOwner    = errors.New("client is not the lock owner")
+	ErrLockNotHeld     = errors.New("lock is not currently held")
 )
 
 // Arbiter 实现写入仲裁（独占模式）

@@ -89,7 +89,7 @@ func TestPTYSendReceive(t *testing.T) {
 	}
 
 	// 写入数据到 master（服务端发送）
-	pty.Write([]byte("Server response\n"))
+	_, _ = pty.Write([]byte("Server response\n"))
 
 	// 检查 slave 收到数据
 	slaveData := pty.GetSlaveData()

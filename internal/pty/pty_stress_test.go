@@ -65,7 +65,7 @@ func TestMockPTYBlockingBehavior(t *testing.T) {
 	done := make(chan bool)
 	go func() {
 		buf := make([]byte, 1024)
-		pty.Read(buf)
+		_, _ = pty.Read(buf)
 		// Read 返回了（可能是错误）
 		done <- true
 	}()
@@ -105,7 +105,7 @@ func TestPTYConcurrentReadWrite(t *testing.T) {
 	numWrites := 100
 	for i := 0; i < numWrites; i++ {
 		go func(id int) {
-			pty.Write([]byte("Concurrent write\n"))
+			_, _ = pty.Write([]byte("Concurrent write\n"))
 		}(i)
 	}
 

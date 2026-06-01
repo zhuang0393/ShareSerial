@@ -7,44 +7,251 @@ metadata:
 
 # ARCHITECTURE.md - 系统架构
 
-## 1. 整体架构图（简化版）
+## 1. 整体架构图（Phase 3 完成）
 
 ```mermaid
 graph TB
-    subgraph "Server Machine"
-        SS[ShareSerial Server]
-        PS[Physical Serial<br>/dev/ttyUSB0<br>115200]
-        CFG[Config File<br>server.yaml]
+    subgraph "Linux Server Machine"
+        SS_L[ShareSerial Server<br>Linux]
+        PS_L[Physical Serial<br>/dev/ttyUSB0<br>115200]
+        CFG_L[Config File<br>server.yaml]
         
-        SS --> PS
-        SS --> CFG
+        SS_L --> PS_L
+        SS_L --> CFG_L
     end
     
-    subgraph "Client Machine 1"
-        SC1[ShareSerial Client]
-        VS1[Virtual Serial<br>/dev/vttyShare0]
-        CFG1[Config File<br>client.yaml]
-        TOOL1[minicom/picocom]
+    subgraph "Windows Server Machine"
+        SS_W[ShareSerial Server<br>Windows]
+        PS_W[Physical Serial<br>COM1<br>115200]
+        CFG_W[Config File<br>server-windows.yaml]
         
-        SC1 --> VS1
-        SC1 --> CFG1
-        TOOL1 --> VS1
+        SS_W --> PS_W
+        SS_W --> CFG_W
     end
     
-    subgraph "Client Machine 2"
-        SC2[ShareSerial Client]
-        VS2[Virtual Serial<br>/dev/vttyShare1]
-        CFG2[Config File<br>client.yaml]
-        TOOL2[minicom/picocom]
+    subgraph "Linux Client Machine"
+        SC_L[ShareSerial Client<br>Linux]
+        VS_L[Virtual Serial<br>/dev/vttyShare0<br>PTY]
+        CFG_CL[Config File<br>client.yaml]
+        TOOL_L[minicom/picocom]
         
-        SC2 --> VS2
-        SC2 --> CFG2
-        TOOL2 --> VS2
+        SC_L --> VS_L
+        SC_L --> CFG_CL
+        TOOL_L --> VS_L
     end
     
-    SS -.->|TCP Raw Data| SC1
-    SS -.->|TCP Raw Data| SC2
+    subgraph "Windows Client Machine"
+        SC_W[ShareSerial Client<br>Windows]
+        LP_W[Local TCP Proxy<br>localhost:8888]
+        CFG_CW[Config File<br>client.yaml]
+        TOOL_W[Putty/Python]
+        
+        SC_W --> LP_W
+        SC_W --> CFG_CW
+        TOOL_W --> LP_W
+    end
+    
+    SS_L -.->|TCP Raw Data| SC_L
+    SS_L -.->|TCP Raw Data| SC_W
+    SS_W -.->|TCP Raw Data| SC_L
+    SS_W -.->|TCP Raw Data| SC_W
 ```
+
+## 2. 跨平台支持矩阵
+
+| 平台 | 服务端 | 客户端 | 串口类型 | 虚拟串口 |
+|------|--------|--------|----------|----------|
+| Linux | ✅ | ✅ | /dev/ttyUSB*, /dev/ttyACM* | PTY + symlink |
+| Windows | ✅ | ✅ | COM1-COM255 | TCP 端口转发 |
+
+## 3. 服务端架构
+
+### 3.1 模块划分（跨平台）
+
+```mermaid
+graph LR
+    subgraph "Server Modules (Cross-platform)"
+        CMD_L[cmd/server<br>Linux Entry]
+        CMD_W[cmd/server-windows<br>Windows Entry]
+        
+        subgraph "pkg/"
+            SERIAL[pkg/serial<br>串口扫描与操作<br>Platform-specific]
+            ARB[pkg/arbiter<br>写入仲裁<br>Cross-platform]
+        end
+        
+        subgraph "internal/"
+            SRV[internal/server<br>TCP 服务器<br>Cross-platform]
+            BC[internal/broadcast<br>多路复用广播<br>Cross-platform]
+            CFG[internal/config<br>配置管理<br>Cross-platform]
+        end
+        
+        CMD_L --> SERIAL
+        CMD_L --> ARB
+        CMD_L --> SRV
+        
+        CMD_W --> SERIAL
+        CMD_W --> ARB
+        CMD_W --> SRV
+        
+        SERIAL --> BC
+        ARB --> SERIAL
+    end
+```
+
+### 3.2 串口模块平台特定实现
+
+| 文件 | 平台 | 说明 |
+|------|------|------|
+| real_serial_linux.go | Linux | 使用 go.bug.st/serial 操作 /dev/ttyUSB* |
+| real_serial_windows.go | Windows | 使用 go.bug.st/serial 操作 COM* |
+| scanner_linux.go | Linux | 扫描 /dev/ttyUSB*, /dev/ttyACM*, /dev/ttyS* |
+| scanner_windows.go | Windows | 扫描 COM1-COM30 |
+| serial.go | All | Port 接口定义、Mock 实现 |
+
+## 4. 客户端架构
+
+### 4.1 Linux 客户端
+
+使用 PTY (Pseudo Terminal) 创建虚拟串口：
+
+```go
+type PTYDevice struct {
+    master     *os.File    // PTY master
+    slave      *os.File    // PTY slave
+    slavePath  string      // /dev/pts/X
+    symlink    string      // /dev/vttyShare0
+}
+```
+
+### 4.2 Windows 客户端
+
+使用本地 TCP 端口转发：
+
+```go
+type LocalProxy struct {
+    localPort  int         // 8888
+    remoteConn net.Conn    // 连接到远程服务器
+    localConns []net.Conn  // 本地连接（Putty 等）
+}
+```
+
+## 5. 数据流架构
+
+### 5.1 读取数据流（下行）
+
+```mermaid
+graph LR
+    PS[Physical Serial] --> SH[SerialHandler]
+    SH --> BC[Broadcaster]
+    BC --> C1[Client1 Queue]
+    BC --> C2[Client2 Queue]
+    C1 --> TCP1[TCP Conn]
+    C2 --> TCP2[TCP Conn]
+    
+    subgraph "Linux Client"
+        TCP1 --> PTY1[PTY Master]
+        PTY1 --> SLAVE1[PTY Slave<br>/dev/vttyShare0]
+    end
+    
+    subgraph "Windows Client"
+        TCP2 --> PROXY2[Local Proxy<br>localhost:8888]
+        PROXY2 --> PUTTY2[Putty/Python]
+    end
+```
+
+### 5.2 写入数据流（上行）
+
+```mermaid
+graph LR
+    subgraph "Arbiter Check"
+        ARB[Arbiter] -->|Lock Check| LOCK{Has Lock?}
+        LOCK -->|Yes| TCP
+        LOCK -->|No| DROP[Drop]
+    end
+    
+    subgraph "Linux Client"
+        USER1[User Input] --> SLAVE1[PTY Slave]
+        SLAVE1 --> MASTER1[PTY Master]
+        MASTER1 --> TCP1[TCP Conn]
+    end
+    
+    subgraph "Windows Client"
+        USER2[User Input] --> PUTTY2[Putty]
+        PUTTY2 --> PROXY2[Local Proxy]
+        PROXY2 --> TCP2[TCP Conn]
+    end
+    
+    TCP1 --> ARB
+    TCP2 --> ARB
+    TCP --> SH[SerialHandler]
+    SH --> PS[Physical Serial]
+```
+
+## 6. 关键设计决策
+
+### 6.1 为什么简化协议？
+
+| 方案 | 优点 | 缺点 | 决策 |
+|------|------|------|------|
+| RFC2217 | 标准、兼容现有工具 | 协议复杂 | ❌ 放弃 |
+| 纯 TCP Raw | 简单、性能可控、跨平台 | 不兼容 telnet 工具 | ✅ 采用 |
+
+**决策：纯 TCP Raw Data**
+- 实现简单，代码量小
+- 跨平台一致性（Linux/Windows）
+- 性能可控（延迟 < 100µs）
+
+### 6.2 Windows 为什么不用虚拟串口驱动？
+
+| 方案 | 优点 | 缺点 |
+|------|------|------|
+| com0com 虚拟驱动 | 兼容所有串口工具 | 需要安装驱动、权限问题 |
+| TCP 端口转发 | 无需安装、简单 | 需要用 Putty/Python |
+
+**决策：TCP 端口转发**
+- 部署简单，无需安装驱动
+- 用户可通过 Putty Raw 连接或 Python socket 连接
+
+### 6.3 为什么用 go.bug.st/serial？
+
+| 方案 | Linux | Windows | 决策 |
+|------|-------|---------|------|
+| go.bug.st/serial | ✅ | ✅ | ✅ 采用 |
+| golang.org/x/sys/exec | 需调用 stty | 需调用 mode | ❌ 放弃 |
+
+**决策：go.bug.st/serial**
+- 跨平台一致 API
+- 纯 Go 实现，无外部依赖
+- 支持所有波特率
+
+## 7. 测试架构
+
+### 7.1 测试覆盖
+
+| 模块 | 单元测试 | 集成测试 | E2E 测试 | 覆盖率 |
+|------|----------|----------|----------|--------|
+| broadcast | ✅ | ✅ | ✅ | 95.1% |
+| arbiter | ✅ | ✅ | ✅ | 94.6% |
+| cli | ✅ | ✅ | ✅ | 90.5% |
+| server | ✅ | ✅ | ✅ | 82.4% |
+| config | ✅ | - | - | 78.3% |
+| pty | ✅ | ✅ | ✅ | 75.6% |
+| serial | ✅ | - | - | 34.7%* |
+
+*serial 模块覆盖率较低是因为真实串口需要硬件
+
+### 7.2 模拟测试环境
+
+使用 socat 创建虚拟串口对进行仿真测试：
+
+```bash
+socat -d -d pty,link=/tmp/ttyVPhysical pty,link=/tmp/ttyVTerminal
+```
+
+---
+
+**Why:** 明确模块边界和接口，便于团队协作和测试
+**How to apply:** 新增模块需遵循架构图位置，接口变更需评审
 
 ## 2. 服务端架构
 

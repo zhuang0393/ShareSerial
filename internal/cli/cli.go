@@ -9,16 +9,16 @@ import (
 
 // CLI 命令行接口
 type CLI struct {
-	logData    []string
-	sendResp   string
-	status     map[string]interface{}
+	logData  []string
+	sendResp string
+	status   map[string]interface{}
 }
 
 // NewMockCLI 创建 Mock CLI
 func NewMockCLI() *CLI {
 	return &CLI{
 		logData: make([]string, 0),
-		status: make(map[string]interface{}),
+		status:  make(map[string]interface{}),
 	}
 }
 

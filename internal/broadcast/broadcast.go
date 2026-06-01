@@ -80,11 +80,11 @@ func (bc *Broadcaster) Close() {
 // MockClient Mock 客户端（用于测试）
 // 注意：MockClient 有最大容量限制（MaxBufferSize），防止内存无限增长
 type MockClient struct {
-	id           string
-	delay        time.Duration
-	received     []byte
-	mu           sync.Mutex
-	sendQueue    chan []byte
+	id            string
+	delay         time.Duration
+	received      []byte
+	mu            sync.Mutex
+	sendQueue     chan []byte
 	MaxBufferSize int // 最大缓冲区大小（字节），超过后丢弃旧数据
 }
 
@@ -94,9 +94,9 @@ const DefaultMaxBufferSize = 1 * 1024 * 1024
 // NewMockClient 创建 Mock 客户端
 func NewMockClient(id string) *MockClient {
 	mc := &MockClient{
-		id:           id,
-		received:     make([]byte, 0),
-		sendQueue:    make(chan []byte, 1024),
+		id:            id,
+		received:      make([]byte, 0),
+		sendQueue:     make(chan []byte, 1024),
 		MaxBufferSize: DefaultMaxBufferSize,
 	}
 
@@ -109,10 +109,10 @@ func NewMockClient(id string) *MockClient {
 // NewMockClientWithDelay 创建带延迟的 Mock 客户端
 func NewMockClientWithDelay(id string, delay time.Duration) *MockClient {
 	mc := &MockClient{
-		id:           id,
-		delay:        delay,
-		received:     make([]byte, 0),
-		sendQueue:    make(chan []byte, 1024),
+		id:            id,
+		delay:         delay,
+		received:      make([]byte, 0),
+		sendQueue:     make(chan []byte, 1024),
 		MaxBufferSize: DefaultMaxBufferSize,
 	}
 

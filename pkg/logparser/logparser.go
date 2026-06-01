@@ -18,7 +18,7 @@ type LogEntry struct {
 
 // Parser Log 解析器
 type Parser struct {
-	timeRegex *regexp.Regexp
+	timeRegex  *regexp.Regexp
 	levelRegex *regexp.Regexp
 }
 

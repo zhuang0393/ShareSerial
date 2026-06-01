@@ -9,10 +9,10 @@ import (
 
 // MockConn Mock 连接
 type MockConn struct {
-	mu     sync.Mutex
-	readBuf []byte
+	mu       sync.Mutex
+	readBuf  []byte
 	writeBuf []byte
-	closed bool
+	closed   bool
 }
 
 // NewMockConn 创建 Mock 连接

@@ -12,14 +12,14 @@ import (
 // VirtualSerialPair 使用 socat 创建虚拟串口对
 // 用于仿真物理串口设备
 type VirtualSerialPair struct {
-	mu            sync.Mutex
-	physicalPort  string // 模拟物理串口（Server 连接）
-	terminalPort  string // 模拟终端串口（用于数据注入）
-	socatProcess  *exec.Cmd
-	socatPID      int
-	physicalFile  *os.File
-	terminalFile  *os.File
-	ready         bool
+	mu           sync.Mutex
+	physicalPort string // 模拟物理串口（Server 连接）
+	terminalPort string // 模拟终端串口（用于数据注入）
+	socatProcess *exec.Cmd
+	socatPID     int
+	physicalFile *os.File
+	terminalFile *os.File
+	ready        bool
 }
 
 // VirtualSerialConfig 虚拟串口配置

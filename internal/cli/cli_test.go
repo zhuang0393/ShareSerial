@@ -112,10 +112,10 @@ func TestCLIStatusCommand(t *testing.T) {
 
 	// 设置模拟状态
 	cli.SetStatus(map[string]interface{}{
-		"server":       "192.168.1.100:7700",
-		"serial":       "/dev/ttyUSB0",
-		"connected":    true,
-		"write_lock":   false,
+		"server":     "192.168.1.100:7700",
+		"serial":     "/dev/ttyUSB0",
+		"connected":  true,
+		"write_lock": false,
 	})
 
 	output, err := cli.Execute("status")

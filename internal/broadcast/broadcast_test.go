@@ -84,8 +84,8 @@ func containsAll(data []byte, lines ...string) bool {
 func contains(data []byte, substr string) bool {
 	return len(data) >= len(substr) &&
 		(string(data)[:len(substr)] == substr ||
-		 string(data)[len(data)-len(substr):] == substr ||
-		 indexOf(data, substr) >= 0)
+			string(data)[len(data)-len(substr):] == substr ||
+			indexOf(data, substr) >= 0)
 }
 
 func indexOf(data []byte, substr string) int {

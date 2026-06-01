@@ -9,14 +9,14 @@ import (
 
 // ReconnectManager 断线重连管理器
 type ReconnectManager struct {
-	mu           sync.Mutex
-	serverAddr   string
-	conn         net.Conn
-	connected    bool
-	maxRetry     int
-	retryCount   int
+	mu            sync.Mutex
+	serverAddr    string
+	conn          net.Conn
+	connected     bool
+	maxRetry      int
+	retryCount    int
 	retryInterval time.Duration
-	stopChan     chan struct{}
+	stopChan      chan struct{}
 }
 
 // NewReconnectManager 创建重连管理器
