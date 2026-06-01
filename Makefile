@@ -1,4 +1,4 @@
-.PHONY: build build-server build-client build-cli build-server-windows build-client-windows build-all-windows test test-unit test-e2e test-simulation clean fmt vet lint install run-server run-client package release install-systemd uninstall-systemd simulation-test
+.PHONY: build build-server build-client build-cli build-server-windows build-client-windows build-all-windows build-server-darwin build-client-darwin build-all-darwin test test-unit test-e2e test-simulation clean fmt vet lint install run-server run-client package release install-systemd uninstall-systemd simulation-test
 
 VERSION := 1.0.0
 BUILD_DIR := bin
@@ -20,6 +20,35 @@ build-cli:
 	@echo "Building CLI..."
 	go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial ./cmd/cli
 
+# macOS build targets (Intel + Apple Silicon)
+build-server-darwin-amd64:
+	@echo "Building macOS server (Intel)..."
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-server-darwin-amd64 ./cmd/server
+
+build-server-darwin-arm64:
+	@echo "Building macOS server (Apple Silicon)..."
+	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-server-darwin-arm64 ./cmd/server
+
+build-client-darwin-amd64:
+	@echo "Building macOS client (Intel)..."
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-client-darwin-amd64 ./cmd/client
+
+build-client-darwin-arm64:
+	@echo "Building macOS client (Apple Silicon)..."
+	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-client-darwin-arm64 ./cmd/client
+
+build-cli-darwin:
+	@echo "Building macOS CLI..."
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-darwin ./cmd/cli
+
+build-all-darwin:
+	@echo "Building all macOS binaries (Intel + Apple Silicon)..."
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-server-darwin-amd64 ./cmd/server
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-client-darwin-amd64 ./cmd/client
+	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-server-darwin-arm64 ./cmd/server
+	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-client-darwin-arm64 ./cmd/client
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-darwin ./cmd/cli
+
 # Windows build targets
 build-server-windows:
 	@echo "Building Windows server..."
@@ -34,6 +63,11 @@ build-all-windows:
 	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-server-windows.exe ./cmd/server-windows
 	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-client-windows.exe ./cmd/client-windows
 	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-cli-windows.exe ./cmd/cli
+
+# Build all platforms
+build-all-platforms: build build-all-windows build-all-darwin
+	@echo "=== All platforms built ==="
+	@ls -la $(BUILD_DIR)/
 
 # Test targets
 test: test-unit test-e2e
