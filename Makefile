@@ -170,6 +170,36 @@ simulation-test-short:
 	@echo "Running simulation tests (short mode)..."
 	go test -v -short ./tests/simulation/...
 
+# Full automated test suite (one-click testing)
+automated-test:
+	@echo "Running full automated test suite..."
+	./scripts/automated-test.sh
+
+# Quick automated test (unit + e2e only)
+automated-test-quick:
+	@echo "Running quick automated test..."
+	./scripts/automated-test.sh --quick
+
+# Full automated test (including long-run tests)
+automated-test-full:
+	@echo "Running full automated test with long-run tests..."
+	./scripts/automated-test.sh --full
+
+# Generate test report
+generate-report:
+	@echo "Generating test report..."
+	go run ./cmd/report-generator .
+
+# Build report generator
+build-report-generator:
+	@echo "Building report generator..."
+	go build -o $(BUILD_DIR)/report-generator ./cmd/report-generator
+
+# Complete test pipeline
+test-pipeline: build automated-test generate-report
+	@echo "=== Test pipeline complete ==="
+	@echo "Check test-reports/ for detailed reports"
+
 # Windows package
 package-windows:
 	@echo "Packaging Windows release..."
