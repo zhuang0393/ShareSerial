@@ -61,10 +61,10 @@ func SetupSimulationEnvironment(t *testing.T) *SimulationEnvironment {
 // Cleanup 清理仿真环境
 func (sim *SimulationEnvironment) Cleanup() {
 	if sim.ProcessManager != nil {
-		sim.ProcessManager.Cleanup()
+		_ = sim.ProcessManager.Cleanup()
 	}
 	if sim.VSP != nil {
-		sim.VSP.Close()
+		_ = sim.VSP.Close()
 	}
 }
 
@@ -88,13 +88,16 @@ func contains(s, substr string) bool {
 	return false
 }
 
-// min 辅助函数
+// minInt 辅助函数
 func minInt(a, b int) int {
 	if a < b {
 		return a
 	}
 	return b
 }
+
+// minInt is used in enhanced_tests.go
+var _ = minInt
 
 // TestSimulationVirtualSerialPair 测试虚拟串口对
 func TestSimulationVirtualSerialPair(t *testing.T) {
@@ -256,11 +259,11 @@ func TestSimulationMultiClient(t *testing.T) {
 	clientCount := 3
 	ptyPaths, err := pm.StartMultipleClients(clientCount)
 	if err != nil {
-		pm.Cleanup()
+		_ = pm.Cleanup()
 		t.Fatalf("Failed to start multiple clients: %v", err)
 	}
 
-	defer pm.Cleanup()
+	defer func() { _ = pm.Cleanup() }()
 
 	// 4. 注入数据
 	testData := "MULTICAST_TEST_DATA"

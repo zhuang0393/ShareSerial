@@ -166,7 +166,7 @@ func (r *RealPTYDevice) GetTermios() *TermiosConfig {
 func (r *RealPTYDevice) InjectExternalData(data []byte) {
 	// 真实 PTY 通过 slave 写入
 	if r.slave != nil {
-		r.slave.Write(data)
+		_, _ = r.slave.Write(data)
 	}
 }
 

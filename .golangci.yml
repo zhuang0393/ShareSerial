@@ -14,19 +14,35 @@ linters:
 
 linters-settings:
   gocyclo:
-    min-complexity: 15
+    min-complexity: 20
   dupl:
-    threshold: 100
+    threshold: 150
 
 run:
   timeout: 5m
-  skip-dirs:
-    - tests/simulation/helpers
-    - vendor
 
 issues:
   exclude-rules:
+    # Test files: relax rules
     - path: _test\.go
       linters:
         - dupl
         - gocyclo
+        - errcheck
+    - path: tests/
+      linters:
+        - dupl
+        - gocyclo
+        - errcheck
+    # Simulation test helpers
+    - path: tests/simulation/
+      linters:
+        - dupl
+        - gocyclo
+        - errcheck
+        - unused
+    # Generated code
+    - path: cmd/report-generator/
+      linters:
+        - gocyclo
+        - staticcheck

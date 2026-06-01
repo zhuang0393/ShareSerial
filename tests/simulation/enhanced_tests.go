@@ -53,9 +53,9 @@ func TestSimulationShellInteraction(t *testing.T) {
 
 	for _, tc := range commands {
 		// 注入命令响应（模拟开发板响应）
-		vsp.InjectData(fmt.Sprintf("$ %s\n", tc.cmd))
+		_ = vsp.InjectData(fmt.Sprintf("$ %s\n", tc.cmd))
 		time.Sleep(100 * time.Millisecond)
-		vsp.InjectData(tc.response)
+		_ = vsp.InjectData(tc.response)
 		time.Sleep(100 * time.Millisecond)
 	}
 

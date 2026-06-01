@@ -188,7 +188,7 @@ func (rg *ReportGenerator) GenerateReport() (*TestReport, error) {
 			}
 			suite.Name = strings.Replace(logFile, "_output.log", "", 1)
 			suite.Name = strings.Replace(suite.Name, "_test", "", 1)
-			suite.Name = strings.Title(suite.Name)
+			suite.Name = strings.ToUpper(suite.Name[:1]) + suite.Name[1:]
 			report.TestSuites = append(report.TestSuites, *suite)
 
 			// 累加统计

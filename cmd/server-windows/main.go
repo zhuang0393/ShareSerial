@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"os/signal"
 	"sync"
@@ -240,14 +239,4 @@ func (m *ConnectionMonitor) Stop() {
 
 	m.running = false
 	close(m.stopChan)
-}
-
-// isPortOpen 检查端口是否可连接
-func isPortOpen(addr string) bool {
-	conn, err := net.DialTimeout("tcp", addr, 1*time.Second)
-	if err != nil {
-		return false
-	}
-	conn.Close()
-	return true
 }

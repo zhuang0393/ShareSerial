@@ -25,6 +25,7 @@ type LogPattern struct {
 }
 
 // DefaultLogPatterns 返回默认日志模式
+//nolint:dupl // Test helper with similar structure
 func DefaultLogPatterns() []LogPattern {
 	return []LogPattern{
 		{Level: "INFO", Message: "System starting", Weight: 5},
@@ -40,6 +41,7 @@ func DefaultLogPatterns() []LogPattern {
 }
 
 // AndroidBootPatterns 返回 Android 启动日志模式
+//nolint:dupl // Test helper with similar structure
 func AndroidBootPatterns() []LogPattern {
 	return []LogPattern{
 		{Level: "INFO", Message: "init: Starting service 'ueventd'", Weight: 5},
