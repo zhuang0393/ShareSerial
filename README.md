@@ -334,7 +334,44 @@ shareserial status
 
 ### Phase 3 (Windows Server)
 
-- 🔄 Windows 服务端
+- ✅ Windows 串口实现（go.bug.st/serial）
+- ✅ COM 端口扫描器
+- ✅ Windows 服务端入口
+- ✅ 配置文件支持
+- ✅ 跨平台编译
+- ✅ CI/CD 支持
+- 🔄 Windows 服务管理（可选）
+
+## Windows 服务端使用说明
+
+### 安装
+
+```bash
+# 构建 Windows 服务端
+make build-server-windows
+
+# 或构建所有 Windows 版本
+make build-all-windows
+```
+
+### 使用
+
+```cmd
+# 扫描可用串口
+shareserial-server-windows.exe --scan
+
+# 启动服务端
+shareserial-server-windows.exe --serial COM1 --port 7700
+
+# 使用配置文件
+shareserial-server-windows.exe --config configs/server-windows.yaml
+```
+
+### 注意事项
+
+1. **权限**：访问 COM 端口可能需要管理员权限
+2. **驱动**：确保已安装正确的串口驱动（如 FTDI、CH340）
+3. **端口名称**：Windows 串口为 `COM1`, `COM2` 等，而非 `/dev/ttyUSB0`
 
 ## Makefile 命令
 

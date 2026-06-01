@@ -1,0 +1,47 @@
+# ShareSerial Windows Server Configuration
+# Windows 服务端配置示例
+
+# 串口配置
+serial:
+  # Windows 串口路径格式：COM1, COM2, COM3, ...
+  # 使用 --scan 参数扫描可用串口
+  path: "COM1"
+
+  # 波特率（Phase 1 固定 115200）
+  baudrate: 115200
+
+# TCP 服务器配置
+server:
+  # 监听端口
+  port: 7700
+
+  # 监听地址（0.0.0.0 表示接受所有连接）
+  address: "0.0.0.0"
+
+# 写锁仲裁配置
+arbiter:
+  # 写锁超时时间（秒）
+  # 获取写锁后，超过此时间自动释放
+  timeout: 30
+
+# 日志配置（可选）
+log:
+  # 日志级别：debug, info, warn, error
+  level: "info"
+
+  # 日志输出：stdout, file
+  output: "stdout"
+
+  # 日志文件路径（output 为 file 时使用）
+  file: "shareserial-server.log"
+
+# Windows 特定配置（可选）
+windows:
+  # 是否在启动时自动扫描串口
+  auto_scan: false
+
+  # 扫描范围：COM1-COM{n}
+  max_scan_port: 30
+
+  # 是否最小化到系统托盘（可选功能，后续版本）
+  tray: false

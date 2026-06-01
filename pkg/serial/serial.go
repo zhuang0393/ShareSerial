@@ -214,18 +214,5 @@ func (m *MockSerialPort) GetWrittenData() []byte {
 	return m.outputBuffer
 }
 
-// Scanner 串口扫描器
-type Scanner struct{}
-
-// NewScanner 创建扫描器
-func NewScanner() *Scanner {
-	return &Scanner{}
-}
-
-// Scan 扫描可用串口
-// 返回 /dev/ttyUSB* 和 /dev/ttyACM* 设备列表
-func (s *Scanner) Scan() ([]string, error) {
-	// Phase 1 暂返回空列表
-	// 生产环境会实现真实扫描
-	return nil, nil
-}
+// Scanner 串口扫描器接口（平台特定实现）
+// 具体实现见 scanner_linux.go 和 scanner_windows.go
