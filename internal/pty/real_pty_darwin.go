@@ -11,8 +11,8 @@ import (
 
 // macOS PTY 常量（与 Linux 不同）
 const (
-	// macOS 使用 TIOCPTYGNAME 获取 slave 名称
-	// 这里使用简化方法：直接打开 /dev/ptmx 并读取 slave 名称
+// macOS 使用 TIOCPTYGNAME 获取 slave 名称
+// 这里使用简化方法：直接打开 /dev/ptmx 并读取 slave 名称
 )
 
 // RealPTYDevice 真实 PTY 实现（macOS 版本）
