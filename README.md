@@ -11,6 +11,7 @@
 - **CLI 支持**：AI 可调用的命令行接口，支持 JSON 输出
 - **配置文件**：YAML 配置支持，便于部署管理
 - **systemd 服务**：支持系统服务安装，自动重启
+- **跨平台**：支持 Linux 和 Windows
 
 ## 快速开始
 
@@ -43,7 +44,7 @@ make install-systemd
 sudo systemctl start shareserial-server
 ```
 
-### 客户端
+### 客户端（Linux）
 
 ```bash
 # 方式 1: 命令行参数
@@ -55,6 +56,39 @@ sudo systemctl start shareserial-server
 # 使用虚拟串口
 minicom -D /dev/vttyShare0
 picocom /dev/vttyShare0
+```
+
+### 客户端（Windows）
+
+```bash
+# 构建 Windows 版本
+make build-client-windows
+
+# 运行
+shareserial-client-windows.exe --server 192.168.1.100:7700 --local-port 8888
+
+# 或使用配置文件
+shareserial-client-windows.exe --config client-windows.yaml
+```
+
+**连接方式**：
+
+Windows 客户端不创建虚拟串口，而是提供本地 TCP 端口转发。用户通过连接 localhost:8888 访问远程串口。
+
+**Putty 连接**：
+1. Connection type: **Raw**
+2. Host Name: **localhost**
+3. Port: **8888**
+4. 点击 **Open**
+
+**Python 脚本**：
+```python
+import socket
+s = socket.socket()
+s.connect(('localhost', 8888))
+while True:
+    data = s.recv(1024)
+    print(data.decode(), end='')
 ```
 
 ### CLI 工具
@@ -170,28 +204,27 @@ sudo systemctl restart shareserial-server
 ```
 shareserial/
 ├── cmd/
-│   ├── server/       # 服务端入口
-│   ├── client/       # 客户端入口
-│   └── cli/          # CLI 工具
+│   ├── server/          # 服务端入口
+│   ├── client/          # 客户端入口（Linux）
+│   ├── client-windows/  # 客户端入口（Windows）
+│   └── cli/             # CLI 工具
 ├── pkg/
-│   ├── arbiter/      # 写锁仲裁
-│   ├── serial/       # 串口操作
-│   └── logparser/    # Log 解析
+│   ├── arbiter/         # 写锁仲裁
+│   ├── serial/          # 串口操作
+│   └── logparser/       # Log 解析
 ├── internal/
-│   ├── server/       # TCP 服务器
-│   ├── broadcast/    # 数据广播
-│   ├── pty/          # PTY 虚拟串口
-│   ├── reconnect/    # 断线重连
-│   └── config/       # 配置解析
+│   ├── server/          # TCP 服务器
+│   ├── broadcast/       # 数据广播
+│   ├── pty/             # PTY 虚拟串口（Linux）
+│   ├── localproxy/      # TCP 端口转发（Windows）
+│   ├── reconnect/       # 断线重连
+│   └── config/          # 配置解析
 ├── tests/
-│   └── e2e/          # 端到端测试
-├── configs/          # 配置示例
-├── scripts/          # 部署脚本
-│   ├── deploy.sh
-│   ├── verify-serial.sh
-│   ├── stability-test.sh
-│   └── shareserial-server.service
-└── bin/              # 可执行文件
+│   ├── e2e/             # 端到端测试
+│   └── simulation/      # 仿真测试
+├── configs/             # 配置示例
+├── scripts/             # 部署脚本
+└── bin/                 # 可执行文件
 ```
 
 ## 测试
@@ -272,7 +305,9 @@ shareserial status
 - **服务管理**: systemd
 - **仲裁模式**: 独占模式写锁
 
-## Phase 1 功能清单
+## Phase 功能清单
+
+### Phase 1 (Linux)
 
 - ✅ TCP 服务器
 - ✅ 串口处理器（Mock + 真实）
@@ -286,19 +321,35 @@ shareserial status
 - ✅ systemd 服务支持
 - ✅ 部署脚本
 - ✅ 端到端测试
-- ✅ 稳定性测试脚本
+- ✅ 仿真测试环境
+
+### Phase 2 (Windows Client)
+
+- ✅ 本地 TCP 端口转发
+- ✅ Windows 客户端 CLI
+- ✅ 自动重连
+- ✅ 跨平台编译
+- 🔄 系统托盘（可选）
+- 🔄 com0com 虚拟串口（可选）
+
+### Phase 3 (Windows Server)
+
+- 🔄 Windows 服务端
 
 ## Makefile 命令
 
 ```bash
-make build          # 构建所有
-make test           # 运行测试
-make package        # 打包发布
-make release        # 完整发布（构建+测试+打包）
-make install        # 安装到系统
-make install-systemd # 安装 systemd 服务
-make uninstall      # 卸载
-make stability-test # 运行稳定性测试
+make build              # 构建所有 Linux 版本
+make build-client-windows  # 构建 Windows 客户端
+make test               # 运行测试
+make package            # 打包发布
+make package-windows    # 打包 Windows 版本
+make release            # 完整发布（构建+测试+打包）
+make install            # 安装到系统
+make install-systemd    # 安装 systemd 服务
+make uninstall          # 卸载
+make stability-test     # 运行稳定性测试
+make simulation-test    # 运行仿真测试
 ```
 
 ## License

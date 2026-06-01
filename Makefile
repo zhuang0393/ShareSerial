@@ -1,4 +1,4 @@
-.PHONY: build build-server build-client build-cli test test-unit test-e2e test-simulation clean fmt vet lint install run-server run-client package release install-systemd uninstall-systemd simulation-test
+.PHONY: build build-server build-client build-cli build-client-windows test test-unit test-e2e test-simulation clean fmt vet lint install run-server run-client package release install-systemd uninstall-systemd simulation-test
 
 VERSION := 1.0.0
 BUILD_DIR := bin
@@ -19,6 +19,17 @@ build-client:
 build-cli:
 	@echo "Building CLI..."
 	go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial ./cmd/cli
+
+# Windows build targets
+build-client-windows:
+	@echo "Building Windows client..."
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-client-windows.exe ./cmd/client-windows
+
+build-all-windows:
+	@echo "Building all Windows binaries..."
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-server-windows.exe ./cmd/server
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-client-windows.exe ./cmd/client-windows
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/shareserial-cli-windows.exe ./cmd/cli
 
 # Test targets
 test: test-unit test-e2e
@@ -158,3 +169,24 @@ simulation-test:
 simulation-test-short:
 	@echo "Running simulation tests (short mode)..."
 	go test -v -short ./tests/simulation/...
+
+# Windows package
+package-windows:
+	@echo "Packaging Windows release..."
+	mkdir -p release/windows
+	cp $(BUILD_DIR)/shareserial-client-windows.exe release/windows/
+	cp configs/client.yaml release/windows/client-windows.yaml
+	cp README.md release/windows/
+	echo "Usage:" > release/windows/README.txt
+	echo "  shareserial-client-windows.exe --server IP:7700 --local-port 8888" >> release/windows/README.txt
+	echo "" >> release/windows/README.txt
+	echo "Connect with Putty:" >> release/windows/README.txt
+	echo "  Connection type: Raw" >> release/windows/README.txt
+	echo "  Host: localhost" >> release/windows/README.txt
+	echo "  Port: 8888" >> release/windows/README.txt
+	@echo "Windows package created in release/windows/"
+
+# Full Windows release
+release-windows: clean build-client-windows package-windows
+	@echo "=== Windows release complete ==="
+	@ls -la release/windows/
