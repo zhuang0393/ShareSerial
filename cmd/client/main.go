@@ -108,9 +108,19 @@ func main() {
 	// 启动自动重连（后台）
 	reconnErrChan := reconn.AutoReconnect()
 
+	// 创建停止信号 channel，用于通知所有 goroutine 停止
+	stopChan := make(chan struct{})
+
 	// 数据转发 goroutine：服务器 -> PTY
 	go func() {
+		errorCount := 0 // 限制错误日志打印次数
 		for {
+			select {
+			case <-stopChan:
+				return // 收到停止信号，退出循环
+			default:
+			}
+
 			conn := reconn.GetConnection()
 			if conn == nil {
 				time.Sleep(100 * time.Millisecond)
@@ -120,12 +130,17 @@ func main() {
 			buf := make([]byte, 1024)
 			n, err := conn.Read(buf)
 			if err != nil {
-				if err != io.EOF {
-					log.Printf("Error reading from server: %v", err)
-				}
 				_ = reconn.Disconnect()
+				// 限制错误日志打印次数，避免疯狂打印
+				if err != io.EOF && errorCount < 3 {
+					log.Printf("Error reading from server: %v", err)
+					errorCount++
+				}
+				// 连接断开后等待一下，避免频繁循环
+				time.Sleep(500 * time.Millisecond)
 				continue
 			}
+			errorCount = 0 // 成功读取后重置计数
 			_, _ = device.Write(buf[:n])
 		}
 	}()
@@ -134,6 +149,12 @@ func main() {
 	go func() {
 		buf := make([]byte, 1024)
 		for {
+			select {
+			case <-stopChan:
+				return // 收到停止信号，退出循环
+			default:
+			}
+
 			n, err := device.Read(buf)
 			if err != nil {
 				// Read 正常阻塞，不会频繁返回错误
@@ -155,6 +176,9 @@ func main() {
 	case err := <-reconnErrChan:
 		log.Printf("Reconnect failed: %v", err)
 	}
+
+	// 通知所有 goroutine 停止
+	close(stopChan)
 
 	// 关闭连接
 	reconn.Stop()
