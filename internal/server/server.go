@@ -115,10 +115,28 @@ func (s *TCPServer) handleClient(client *ClientConn) {
 			return
 		}
 
-		// 检查写锁
-		if s.arbiter.Owner() == client.id {
-			// 写入串口
-			if s.serial != nil {
+		if n > 0 {
+			// 自动获取写锁：如果当前没有写锁或锁持有者不是自己，尝试获取
+			if s.arbiter.Owner() != client.id {
+				// 尝试获取写锁（不阻塞，立即返回结果）
+				acquired, _ := s.arbiter.Acquire(client.id)
+				if !acquired {
+					// 获取锁失败，其他 Client 正在使用
+					// 可以选择等待或跳过，这里选择等待锁释放后自动获取
+					// 等待最多 5 秒
+					for i := 0; i < 50; i++ {
+						acquired, _ = s.arbiter.Acquire(client.id)
+						if acquired {
+							break
+						}
+						// 等待 100ms 后重试
+						time.Sleep(100 * time.Millisecond)
+					}
+				}
+			}
+
+			// 写入串口（无论是否获取到锁，都尝试写入）
+			if s.arbiter.Owner() == client.id && s.serial != nil {
 				_, _ = s.serial.Write(buf[:n])
 			}
 		}
