@@ -265,6 +265,7 @@ type MockServer struct {
 	listener      net.Listener
 	clients       map[string]net.Conn
 	arbiter       *arbiter.Arbiter
+	serial        serial.Port // 串口设备
 	data          []byte
 	MaxBufferSize int // 最大缓冲区大小（字节），超过后丢弃旧数据
 }
@@ -429,4 +430,79 @@ func (m *MockServer) GetClientIDs() []string {
 		ids = append(ids, id)
 	}
 	return ids
+}
+
+// NewMockServerWithSerial 创建带串口的 Mock 服务器（用于测试）
+func NewMockServerWithSerial(arb *arbiter.Arbiter, serialPort serial.Port) *MockServer {
+	return &MockServer{
+		clients:       make(map[string]net.Conn),
+		arbiter:       arb,
+		data:          make([]byte, 0),
+		MaxBufferSize: DefaultServerMaxBufferSize,
+		serial:        serialPort,
+	}
+}
+
+// MockClientConn Mock 客户端连接（用于测试）
+type MockClientConn struct {
+	id   string
+	data []byte
+}
+
+// 实现 net.Conn 接口
+func (m *MockClientConn) Read(b []byte) (n int, err error) {
+	if len(m.data) == 0 {
+		return 0, nil
+	}
+	n = copy(b, m.data)
+	m.data = m.data[n:]
+	return n, nil
+}
+
+func (m *MockClientConn) Write(b []byte) (n int, err error) {
+	m.data = append(m.data, b...)
+	return len(b), nil
+}
+
+func (m *MockClientConn) Close() error {
+	return nil
+}
+
+func (m *MockClientConn) LocalAddr() net.Addr {
+	return nil
+}
+
+func (m *MockClientConn) RemoteAddr() net.Addr {
+	return nil
+}
+
+func (m *MockClientConn) SetDeadline(t time.Time) error {
+	return nil
+}
+
+func (m *MockClientConn) SetReadDeadline(t time.Time) error {
+	return nil
+}
+
+func (m *MockClientConn) SetWriteDeadline(t time.Time) error {
+	return nil
+}
+
+// AddMockClient 添加 Mock 客户端（用于测试）
+func (m *MockServer) AddMockClient(clientID string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.clients[clientID] = &MockClientConn{id: clientID, data: make([]byte, 0)}
+}
+
+// GetMockClientData 获取 Mock 客户端数据（用于测试）
+func (m *MockServer) GetMockClientData(clientID string) []byte {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if conn, ok := m.clients[clientID]; ok {
+		if mockConn, ok := conn.(*MockClientConn); ok {
+			return mockConn.data
+		}
+	}
+	return nil
 }
