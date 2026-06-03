@@ -35,6 +35,10 @@ Thumbs.db
 *.log
 *.tar.gz
 
+# Release packages (allow)
+!release/*.tar.gz
+!release/*.zip
+
 # Simulation test temporary files
 /tmp/ttyV*
 /tmp/vttyTest*

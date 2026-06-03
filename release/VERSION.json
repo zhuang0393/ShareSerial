@@ -1,0 +1,8 @@
+{
+  "version": "1.0.0",
+  "release_date": "2026-06-03",
+  "build_number": 1,
+  "commit_hash": "a3e9c0c",
+  "version_scheme": "semantic",
+  "description": "First stable release of ShareSerial"
+}
