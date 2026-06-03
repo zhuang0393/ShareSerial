@@ -112,7 +112,9 @@ func main() {
 	stopChan := make(chan struct{})
 
 	// 数据转发 goroutine：服务器 -> PTY
+	serverToPtyDone := make(chan struct{})
 	go func() {
+		defer close(serverToPtyDone)
 		errorCount := 0 // 限制错误日志打印次数
 		for {
 			select {
@@ -145,26 +147,37 @@ func main() {
 		}
 	}()
 
-	// PTY -> 服务器转发
+	// PTY -> 服务器转发（使用 goroutine 读取避免阻塞）
+	ptyToServerDone := make(chan struct{})
 	go func() {
+		defer close(ptyToServerDone)
 		buf := make([]byte, 1024)
 		for {
+			// 使用 goroutine 来避免 Read 阻塞无法响应 stopChan
+			readDone := make(chan struct{})
+			var n int
+			var err error
+			go func() {
+				defer close(readDone)
+				n, err = device.Read(buf)
+			}()
+
+			// 等待读取完成或停止信号
 			select {
 			case <-stopChan:
-				return // 收到停止信号，退出循环
-			default:
-			}
-
-			n, err := device.Read(buf)
-			if err != nil {
-				// Read 正常阻塞，不会频繁返回错误
-				time.Sleep(10 * time.Millisecond)
-				continue
-			}
-
-			conn := reconn.GetConnection()
-			if conn != nil && reconn.IsConnected() {
-				_, _ = conn.Write(buf[:n])
+				// 强制关闭 device 来解除 Read 阻塞
+				device.Close()
+				return
+			case <-readDone:
+				// 读取完成，处理数据
+				if err != nil {
+					// PTY 关闭或出错，退出
+					return
+				}
+				conn := reconn.GetConnection()
+				if conn != nil && reconn.IsConnected() {
+					_, _ = conn.Write(buf[:n])
+				}
 			}
 		}
 	}()
@@ -179,6 +192,16 @@ func main() {
 
 	// 通知所有 goroutine 停止
 	close(stopChan)
+
+	// 等待 goroutine 完成（最多等待 2 秒）
+	select {
+	case <-serverToPtyDone:
+	case <-time.After(2 * time.Second):
+	}
+	select {
+	case <-ptyToServerDone:
+	case <-time.After(2 * time.Second):
+	}
 
 	// 关闭连接
 	reconn.Stop()
