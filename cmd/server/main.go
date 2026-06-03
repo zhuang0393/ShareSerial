@@ -59,7 +59,7 @@ func main() {
 		log.Printf("Warning: cannot open serial port %s: %v", cfg.Serial.Path, err)
 		log.Printf("Using mock serial port for testing")
 		serialPort = serial.NewMockSerialPort()
-		serialPort.Open(cfg.Serial.Path)
+		_ = serialPort.Open(cfg.Serial.Path)
 	}
 	srv.SetSerial(serialPort)
 
@@ -91,7 +91,9 @@ func main() {
 	close(stopChan)
 
 	// 停止服务器
-	srv.Stop()
+	if err := srv.Stop(); err != nil {
+		log.Printf("Failed to stop server: %v", err)
+	}
 	log.Println("Server stopped")
 }
 

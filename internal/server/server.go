@@ -119,7 +119,7 @@ func (s *TCPServer) handleClient(client *ClientConn) {
 		if s.arbiter.Owner() == client.id {
 			// 写入串口
 			if s.serial != nil {
-				s.serial.Write(buf[:n])
+				_, _ = s.serial.Write(buf[:n])
 			}
 		}
 	}
@@ -141,7 +141,7 @@ func (s *TCPServer) broadcastLoop() {
 
 		// 同步写入每个客户端，避免 goroutine 爆炸
 		for _, client := range clients {
-			client.conn.Write(dataCopy)
+			_, _ = client.conn.Write(dataCopy)
 		}
 	}
 }
@@ -206,7 +206,7 @@ func (s *TCPServer) AcquireWriteLock(clientID string) (bool, error) {
 
 // ReleaseWriteLock 释放写锁
 func (s *TCPServer) ReleaseWriteLock(clientID string) {
-	s.arbiter.Release(clientID)
+	_ = s.arbiter.Release(clientID)
 }
 
 // HasWriteLock 检查是否有写锁
@@ -381,7 +381,8 @@ func (m *MockServer) Broadcast(data []byte) {
 	m.appendDataWithLimit(data)
 	// 向所有客户端发送数据
 	for _, conn := range m.clients {
-		go conn.Write(data)
+		conn := conn // 创建局部变量避免闭包捕获循环变量
+		go func() { _, _ = conn.Write(data) }()
 	}
 	m.mu.Unlock()
 }
@@ -393,7 +394,7 @@ func (m *MockServer) AcquireWriteLock(clientID string) (bool, error) {
 
 // ReleaseWriteLock 释放写锁
 func (m *MockServer) ReleaseWriteLock(clientID string) {
-	m.arbiter.Release(clientID)
+	_ = m.arbiter.Release(clientID)
 }
 
 // HasWriteLock 检查是否有写锁

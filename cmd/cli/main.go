@@ -45,7 +45,9 @@ func main() {
 		switch args[0] {
 		case "log":
 			// 发送请求获取日志
-			conn.Write([]byte("GET_LOG\n"))
+			if _, err := conn.Write([]byte("GET_LOG\n")); err != nil {
+				log.Printf("Failed to send log request: %v", err)
+			}
 			// 读取响应（简化实现）
 			buf := make([]byte, 4096)
 			n, _ := conn.Read(buf)
@@ -53,7 +55,9 @@ func main() {
 			c.SetLogData(lines)
 		case "status":
 			// 发送请求获取状态
-			conn.Write([]byte("GET_STATUS\n"))
+			if _, err := conn.Write([]byte("GET_STATUS\n")); err != nil {
+				log.Printf("Failed to send status request: %v", err)
+			}
 			buf := make([]byte, 1024)
 			n, _ := conn.Read(buf)
 			status := parseStatusData(string(buf[:n]))
@@ -68,7 +72,9 @@ func main() {
 				}
 			}
 			if command != "" {
-				conn.Write([]byte("SEND:" + command + "\n"))
+				if _, err := conn.Write([]byte("SEND:" + command + "\n")); err != nil {
+					log.Printf("Failed to send command: %v", err)
+				}
 				buf := make([]byte, 1024)
 				n, _ := conn.Read(buf)
 				c.SetSendResponse(string(buf[:n]))

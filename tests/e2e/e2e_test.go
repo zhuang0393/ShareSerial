@@ -215,7 +215,7 @@ func TestE2ECLIIntegration(t *testing.T) {
 		"server":    "192.168.1.100:7700",
 		"connected": true,
 	})
-	output, err = mockCLI.Execute("status")
+	_, err = mockCLI.Execute("status")
 	if err != nil {
 		t.Fatalf("CLI status command failed: %v", err)
 	}

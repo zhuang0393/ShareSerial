@@ -108,4 +108,25 @@ make test
 
 ---
 
+## Git 推送规范
+
+**本项目为 GitHub 开源项目，直接推送到 GitHub 即可，无需 Gerrit Review。**
+
+```bash
+# 正确：直接推送到 GitHub
+git add -A
+git commit -m "fix: resolve golangci-lint issues"
+git push origin main
+
+# 构建 PR 方式（推荐）
+git checkout -b feature/xxx
+git add -A
+git commit -m "feat: add new feature"
+git push origin feature/xxx
+# 然后在 GitHub 上创建 Pull Request
+```
+
+---
+
 *Created: 2026-05-28*
+*Updated: 2026-06-03*

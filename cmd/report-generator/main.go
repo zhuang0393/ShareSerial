@@ -80,7 +80,7 @@ type ReportGenerator struct {
 // NewReportGenerator 创建报告生成器
 func NewReportGenerator(projectRoot string) *ReportGenerator {
 	reportDir := filepath.Join(projectRoot, "test-reports")
-	os.MkdirAll(reportDir, 0755)
+	_ = os.MkdirAll(reportDir, 0755)
 	return &ReportGenerator{
 		projectRoot: projectRoot,
 		reportDir:   reportDir,
@@ -506,9 +506,9 @@ func main() {
 	timestamp := time.Now().Format("20060102_150405")
 
 	// 保存多种格式的报告
-	rg.SaveMarkdownReport(report, filepath.Join(rg.reportDir, fmt.Sprintf("report_%s.md", timestamp)))
-	rg.SaveHTMLReport(report, filepath.Join(rg.reportDir, fmt.Sprintf("report_%s.html", timestamp)))
-	rg.SaveJSONReport(report, filepath.Join(rg.reportDir, fmt.Sprintf("report_%s.json", timestamp)))
+	_ = rg.SaveMarkdownReport(report, filepath.Join(rg.reportDir, fmt.Sprintf("report_%s.md", timestamp)))
+	_ = rg.SaveHTMLReport(report, filepath.Join(rg.reportDir, fmt.Sprintf("report_%s.html", timestamp)))
+	_ = rg.SaveJSONReport(report, filepath.Join(rg.reportDir, fmt.Sprintf("report_%s.json", timestamp)))
 
 	fmt.Println("Reports generated:")
 	fmt.Printf("  Markdown: test-reports/report_%s.md\n", timestamp)

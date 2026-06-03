@@ -138,7 +138,9 @@ func (cm *ConnectionManager) Start() {
 	cm.mu.Unlock()
 
 	// 初始连接
-	cm.connect()
+	if err := cm.connect(); err != nil {
+		log.Printf("Initial connection failed: %v", err)
+	}
 
 	// 后台重连
 	go cm.reconnectLoop()

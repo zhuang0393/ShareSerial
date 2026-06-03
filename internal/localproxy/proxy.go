@@ -109,7 +109,7 @@ func (p *LocalProxy) handleLocalConnection(localConn net.Conn) {
 			// 发送到远程
 			p.mu.Lock()
 			if p.remoteConn != nil {
-				p.remoteConn.Write(buf[:n])
+				_, _ = p.remoteConn.Write(buf[:n])
 			}
 			p.mu.Unlock()
 		}
@@ -156,7 +156,7 @@ func (p *LocalProxy) remoteReadLoop() {
 				// 广播到所有本地连接
 				for localConn := range p.localConns {
 					go func(conn net.Conn, d []byte) {
-						conn.Write(d)
+						_, _ = conn.Write(d)
 					}(localConn, data)
 				}
 				p.mu.Unlock()
@@ -177,7 +177,7 @@ func (p *LocalProxy) sendBufferedData(localConn net.Conn) {
 		if len(buffer) > 64*1024 {
 			start = len(buffer) - 64*1024
 		}
-		localConn.Write(buffer[start:])
+		_, _ = localConn.Write(buffer[start:])
 	}
 }
 

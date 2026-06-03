@@ -106,10 +106,10 @@ func main() {
 				if err != io.EOF {
 					log.Printf("Error reading from server: %v", err)
 				}
-				reconn.Disconnect()
+				_ = reconn.Disconnect()
 				continue
 			}
-			device.Write(buf[:n])
+			_, _ = device.Write(buf[:n])
 		}
 	}()
 
@@ -126,7 +126,7 @@ func main() {
 
 			conn := reconn.GetConnection()
 			if conn != nil && reconn.IsConnected() {
-				conn.Write(buf[:n])
+				_, _ = conn.Write(buf[:n])
 			}
 		}
 	}()
@@ -141,7 +141,7 @@ func main() {
 
 	// 关闭连接
 	reconn.Stop()
-	reconn.Disconnect()
+	_ = reconn.Disconnect()
 	device.Close()
 	log.Println("Client stopped")
 }

@@ -141,7 +141,7 @@ func TestLoadServerNotFound(t *testing.T) {
 		t.Errorf("Expected no error for missing file, got %v", err)
 	}
 	if cfg == nil {
-		t.Error("Expected default config, got nil")
+		t.Fatal("Expected default config, got nil")
 	}
 	if cfg.Server.Port != 7700 {
 		t.Errorf("Expected default port 7700, got %d", cfg.Server.Port)
@@ -157,7 +157,7 @@ func TestLoadClientNotFound(t *testing.T) {
 		t.Errorf("Expected no error for missing file, got %v", err)
 	}
 	if cfg == nil {
-		t.Error("Expected default config, got nil")
+		t.Fatal("Expected default config, got nil")
 	}
 	if cfg.Server.Port != 7700 {
 		t.Errorf("Expected default port 7700, got %d", cfg.Server.Port)
