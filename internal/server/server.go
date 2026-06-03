@@ -121,23 +121,38 @@ func (s *TCPServer) handleClient(client *ClientConn) {
 				// 尝试获取写锁（不阻塞，立即返回结果）
 				acquired, _ := s.arbiter.Acquire(client.id)
 				if !acquired {
-					// 获取锁失败，其他 Client 正在使用
-					// 可以选择等待或跳过，这里选择等待锁释放后自动获取
-					// 等待最多 5 秒
-					for i := 0; i < 50; i++ {
+					// 获取锁失败，等待锁释放
+					for i := 0; i < 10; i++ { // 减少等待时间到 1 秒
 						acquired, _ = s.arbiter.Acquire(client.id)
 						if acquired {
 							break
 						}
-						// 等待 100ms 后重试
 						time.Sleep(100 * time.Millisecond)
 					}
 				}
 			}
 
-			// 写入串口（无论是否获取到锁，都尝试写入）
+			// 写入串口
 			if s.arbiter.Owner() == client.id && s.serial != nil {
 				_, _ = s.serial.Write(buf[:n])
+
+				// 【关键】写入后立即尝试读取串口响应
+				// 使用小缓冲区和短超时避免阻塞
+				responseBuf := make([]byte, 4096)
+				// 尝试读取多次，确保获取完整响应
+				for i := 0; i < 3; i++ {
+					// 使用非阻塞方式读取（serial.Read 应该有超时机制）
+					responseN, responseErr := s.serial.Read(responseBuf)
+					if responseErr == nil && responseN > 0 {
+						// 立即广播响应到所有客户端
+						responseData := make([]byte, responseN)
+						copy(responseData, responseBuf[:responseN])
+						s.Broadcast(responseData)
+						break // 读到响应后退出循环
+					}
+					// 没有响应，短暂等待后再次尝试
+					time.Sleep(50 * time.Millisecond)
+				}
 			}
 		}
 	}
