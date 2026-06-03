@@ -43,7 +43,23 @@ func main() {
 
 	// 命令行参数覆盖配置文件
 	if *serverAddr != "" {
-		cfg.Server.Address = *serverAddr
+		// 解析 server 地址（可能包含端口）
+		host, port, err := net.SplitHostPort(*serverAddr)
+		if err == nil {
+			// 地址包含端口，分别设置
+			cfg.Server.Address = host
+			// 解析端口字符串为整数
+			portInt := 0
+			for _, c := range port {
+				if c >= '0' && c <= '9' {
+					portInt = portInt*10 + int(c-'0')
+				}
+			}
+			cfg.Server.Port = portInt
+		} else {
+			// 地址不含端口，只设置 IP
+			cfg.Server.Address = *serverAddr
+		}
 	}
 	if *maxRetry != 0 {
 		cfg.Reconnect.MaxRetry = *maxRetry
