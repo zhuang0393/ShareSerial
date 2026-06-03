@@ -17,7 +17,7 @@ echo_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 # 默认串口设备
 SERIAL_PORT=${1:-/dev/ttyUSB0}
 SERVER_PORT=${2:-7700}
-PTY_PATH=${3:-/dev/ttyShare0}
+PTY_PATH=${3:-/tmp/ttyShare0}
 
 # 检查工作目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

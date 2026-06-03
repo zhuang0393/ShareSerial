@@ -33,6 +33,7 @@ pkill -f shareserial-client 2>/dev/null || true
 
 # 清理 symlink
 echo_info "清理虚拟串口 symlink..."
+rm -f /tmp/ttyShare* 2>/dev/null || true
 sudo rm -f /dev/ttyShare* 2>/dev/null || true
 
 # 检查是否还有进程
