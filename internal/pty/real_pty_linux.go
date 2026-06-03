@@ -11,6 +11,37 @@ import (
 	"unsafe"
 )
 
+// termios 结构体用于配置 PTY
+type termios struct {
+	iflag  uint32
+	oflag  uint32
+	cflag  uint32
+	lflag  uint32
+	cc     [20]uint8
+}
+
+// TCSETS 和 TCGETS 常量
+const (
+	TCGETS = 0x5401
+	TCSETS = 0x5402
+
+	// 输入模式标志
+	ICANON = 0x2   // 行缓冲模式
+	ECHO   = 0x8   // 回显
+	ICRNL  = 0x100 // CR 转 NL
+
+	// 输出模式标志
+	OPOST  = 0x1   // 输出处理
+	ONLCR  = 0x4   // NL 转 CR-NL
+
+	// 控制模式标志
+	CREAD  = 0x80  // 启用接收
+	CS8    = 0x30  // 8 位数据
+
+	// 本地模式标志
+	ISIG   = 0x1   // 信号处理
+)
+
 // RealPTYDevice 真实 PTY 实现
 type RealPTYDevice struct {
 	mu          sync.Mutex
@@ -62,6 +93,26 @@ func CreateRealPTY(symlinkPath string) (*RealPTYDevice, error) {
 	}
 
 	slaveFile := os.NewFile(uintptr(slaveFd), "pty-slave")
+
+	// 设置 termios 为 raw 模式（禁用行缓冲和输出处理）
+	var t termios
+	_, _, errno = syscall.Syscall6(syscall.SYS_IOCTL,
+		uintptr(slaveFd), uintptr(TCGETS),
+		uintptr(unsafe.Pointer(&t)), 0, 0, 0)
+	if errno == 0 {
+		// 禁用行缓冲模式、回显、信号处理
+		t.lflag &= uint32(^uint32(ICANON | ECHO | ISIG))
+		// 禁用输出处理（NL 转 CR-NL）
+		t.oflag &= uint32(^uint32(OPOST))
+		// 禁用输入处理（CR 转 NL）
+		t.iflag &= uint32(^uint32(ICRNL))
+		// 设置 8 位数据
+		t.cflag |= CREAD | CS8
+		// 应用设置
+		syscall.Syscall6(syscall.SYS_IOCTL,
+			uintptr(slaveFd), uintptr(TCSETS),
+			uintptr(unsafe.Pointer(&t)), 0, 0, 0)
+	}
 
 	// 创建 symlink
 	if symlinkPath != "" {
