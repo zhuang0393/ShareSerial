@@ -5,12 +5,12 @@ package serial
 
 import (
 	"go.bug.st/serial"
-	"sync"
 )
 
 // RealSerialPort 真实串口实现
+// 注意：移除互斥锁，因为 Read 和 Write 应该能够并发执行
+// 否则 Read 阻塞时会阻止 Write 执行，导致用户输入无法发送
 type RealSerialPort struct {
-	mu     sync.Mutex
 	port   serial.Port
 	open   bool
 	path   string
@@ -26,9 +26,6 @@ func NewRealSerialPort() *RealSerialPort {
 
 // Open 打开真实串口
 func (r *RealSerialPort) Open(path string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	// 创建串口模式
 	mode := &serial.Mode{
 		BaudRate: r.config.BaudRate,
@@ -48,9 +45,6 @@ func (r *RealSerialPort) Open(path string) error {
 
 // Close 关闭串口
 func (r *RealSerialPort) Close() error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	if r.port != nil {
 		r.port.Close()
 	}
@@ -58,42 +52,31 @@ func (r *RealSerialPort) Close() error {
 	return nil
 }
 
-// Read 读取数据
+// Read 读取数据（无锁，允许并发）
+// go.bug.st/serial 的 Read 是线程安全的
 func (r *RealSerialPort) Read(buf []byte) (int, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	if !r.open || r.port == nil {
 		return 0, ErrPortNotOpen
 	}
-
 	return r.port.Read(buf)
 }
 
-// Write 写入数据
+// Write 写入数据（无锁，允许并发）
+// go.bug.st/serial 的 Write 是线程安全的
 func (r *RealSerialPort) Write(buf []byte) (int, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	if !r.open || r.port == nil {
 		return 0, ErrPortNotOpen
 	}
-
 	return r.port.Write(buf)
 }
 
 // IsOpen 检查是否打开
 func (r *RealSerialPort) IsOpen() bool {
-	r.mu.Lock()
-	defer r.mu.Unlock()
 	return r.open
 }
 
 // SetConfig 设置配置
 func (r *RealSerialPort) SetConfig(config *Config) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	r.config = config
 
 	if r.port == nil {
