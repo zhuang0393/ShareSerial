@@ -1,6 +1,6 @@
 #!/bin/bash
 # ShareSerial 本地部署脚本
-# 用法: ./deploy-local.sh [串口设备]
+# 用法: ./deploy-local.sh [串口设备] [端口] [PTY路径] [--sudo]
 
 set -e
 
@@ -14,10 +14,19 @@ echo_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
 echo_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 echo_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-# 默认串口设备
+# 默认参数
 SERIAL_PORT=${1:-/dev/ttyUSB0}
 SERVER_PORT=${2:-7700}
 PTY_PATH=${3:-/tmp/ttyShare0}
+USE_SUDO=false
+
+# 检查是否有 --sudo 参数
+for arg in "$@"; do
+    if [ "$arg" = "--sudo" ]; then
+        USE_SUDO=true
+        PTY_PATH="/dev/ttyShare0"
+    fi
+done
 
 # 检查工作目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -42,6 +51,11 @@ echo_info "=========================================="
 echo_info "物理串口: $SERIAL_PORT"
 echo_info "Server 端口: $SERVER_PORT"
 echo_info "虚拟串口: $PTY_PATH"
+if [ "$USE_SUDO" = true ]; then
+    echo_info "模式: sudo (兼容烧录工具)"
+else
+    echo_info "模式: 普通 (兼容 minicom/screen)"
+fi
 echo_info "=========================================="
 
 # 步骤 1: 检查串口设备
@@ -51,7 +65,6 @@ if [ ! -e "$SERIAL_PORT" ]; then
     echo_info "可用串口设备:"
     ls -la /dev/ttyUSB* /dev/ttyACM* /dev/ttyS* 2>/dev/null || echo_warn "无串口设备"
 
-    # 提示用户选择
     read -p "请输入串口设备路径（如 /dev/ttyACM0）: " SERIAL_PORT
     if [ ! -e "$SERIAL_PORT" ]; then
         echo_error "串口设备 $SERIAL_PORT 不存在，退出"
@@ -107,7 +120,13 @@ echo_info "Server 已启动 (PID: $SERVER_PID)"
 
 # 步骤 5: 启动 Client
 echo_info "步骤 5: 启动 Client..."
-$BIN_DIR/shareserial-client --server "127.0.0.1:$SERVER_PORT" --pty "$PTY_PATH" &
+if [ "$USE_SUDO" = true ]; then
+    # sudo 模式：在 /dev/ 创建 symlink
+    sudo $BIN_DIR/shareserial-client --server "127.0.0.1:$SERVER_PORT" --pty "$PTY_PATH" &
+else
+    # 普通模式：在 /tmp/ 创建 symlink
+    $BIN_DIR/shareserial-client --server "127.0.0.1:$SERVER_PORT" --pty "$PTY_PATH" &
+fi
 CLIENT_PID=$!
 sleep 2
 
@@ -143,10 +162,18 @@ echo_info "部署完成!"
 echo_info "=========================================="
 echo_info ""
 echo_info "使用方法:"
-echo_info "  sudo minicom -D $PTY_PATH"
+if [ "$USE_SUDO" = true ]; then
+    echo_info "  minicom -D $PTY_PATH (兼容所有串口软件)"
+    echo_info "  烧录工具可直接选择 $PTY_PATH"
+else
+    echo_info "  minicom -D $PTY_PATH"
+    echo_info "  screen $PTY_PATH"
+    echo_info "  烧录工具需手动创建 /dev symlink:"
+    echo_info "    sudo ln -sf $(readlink $PTY_PATH) /dev/ttyShare0"
+fi
 echo_info ""
 echo_info "停止服务:"
-echo_info "  ./stop-local.sh"
+echo_info "  ./scripts/stop-local.sh"
 echo_info "  或手动执行: kill $SERVER_PID $CLIENT_PID"
 echo_info ""
 echo_info "进程信息已保存到: /tmp/shareserial-pids.txt"
@@ -154,3 +181,16 @@ echo_info ""
 
 # 保存 PID
 echo "$SERVER_PID $CLIENT_PID" > /tmp/shareserial-pids.txt
+
+# 如果是普通模式，提供额外提示
+if [ "$USE_SUDO" = false ]; then
+    echo_warn "=========================================="
+    echo_warn "提示: 烧录工具兼容性"
+    echo_warn "=========================================="
+    echo_warn "当前虚拟串口位于 /tmp/ttyShare0"
+    echo_warn "烧录工具（如 SDToolBox）可能只识别 /dev/tty*"
+    echo_warn ""
+    echo_warn "如需烧录工具兼容，请使用 --sudo 参数重新部署:"
+    echo_warn "  ./scripts/deploy-local.sh /dev/ttyUSB0 --sudo"
+    echo_warn ""
+fi
