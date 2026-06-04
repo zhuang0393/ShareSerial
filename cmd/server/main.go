@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,7 +35,6 @@ func main() {
 	// 加载配置文件
 	cfg, err := config.LoadServer(*configPath)
 	if err != nil {
-		log.Printf("Warning: failed to load config: %v, using defaults", err)
 		cfg = config.DefaultServerConfig()
 	}
 
@@ -46,18 +46,13 @@ func main() {
 		cfg.Server.Port = *port
 	}
 
-	log.Printf("Configuration loaded from: %s", getConfigSource(*configPath))
-	log.Printf("Serial port: %s (baudrate: %d)", cfg.Serial.Path, cfg.Serial.BaudRate)
-	log.Printf("Listen address: %s", cfg.ListenAddress())
-
 	// 创建服务器
 	srv := server.NewTCPServer()
 
 	// 尝试打开真实串口
 	serialPort, err := serial.NewPort(cfg.Serial.Path)
 	if err != nil {
-		log.Printf("Warning: cannot open serial port %s: %v", cfg.Serial.Path, err)
-		log.Printf("Using mock serial port for testing")
+		log.Printf("[WARN] 串口 %s 未找到，使用模拟串口", cfg.Serial.Path)
 		serialPort = serial.NewMockSerialPort()
 		_ = serialPort.Open(cfg.Serial.Path)
 	}
@@ -66,12 +61,21 @@ func main() {
 	// 启动服务器
 	addr := cfg.ListenAddress()
 	if err := srv.Start(addr); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		log.Fatalf("[FAIL] 无法启动服务器: %v", err)
 	}
 
-	log.Printf("ShareSerial Server started on %s", srv.Addr())
-	log.Printf("Serial port: %s (%d baud)", cfg.Serial.Path, cfg.Serial.BaudRate)
-	log.Printf("Arbiter timeout: %d seconds", cfg.Arbiter.Timeout)
+	// 简洁的启动信息
+	localIP := getLocalIP()
+	log.Printf("========================================")
+	log.Printf("ShareSerial Server 已就绪")
+	log.Printf("========================================")
+	log.Printf("监听: %s:%d", localIP, cfg.Server.Port)
+	log.Printf("串口: %s @ %d baud", cfg.Serial.Path, cfg.Serial.BaudRate)
+	log.Printf("========================================")
+	log.Printf("")
+	log.Printf("Windows Client 连接命令:")
+	log.Printf("  shareserial-client-windows.exe --server %s:%d", localIP, cfg.Server.Port)
+	log.Printf("")
 
 	// 停止信号
 	stopChan := make(chan struct{})
@@ -85,16 +89,16 @@ func main() {
 
 	// 等待信号
 	<-sigChan
-	log.Println("Shutting down server...")
+	log.Println("[INFO] 正在关闭服务器...")
 
 	// 先停止数据读取
 	close(stopChan)
 
 	// 停止服务器
 	if err := srv.Stop(); err != nil {
-		log.Printf("Failed to stop server: %v", err)
+		log.Printf("[WARN] 停止服务器失败: %v", err)
 	}
-	log.Println("Server stopped")
+	log.Println("[OK] 服务器已停止")
 }
 
 // readSerialAndBroadcast 从串口读取数据并广播到所有客户端
@@ -124,17 +128,20 @@ func readSerialAndBroadcast(srv *server.TCPServer, port serial.Port, stop <-chan
 	}
 }
 
-// getConfigSource 返回配置来源描述
-func getConfigSource(path string) string {
-	if path != "" {
-		return path
+// getLocalIP 获取本地 IP 地址
+func getLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "127.0.0.1"
 	}
-	// 检查默认路径
-	if _, err := os.Stat("/etc/shareserial/server.yaml"); err == nil {
-		return "/etc/shareserial/server.yaml"
+
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
 	}
-	if _, err := os.Stat("./configs/server.yaml"); err == nil {
-		return "./configs/server.yaml"
-	}
-	return "defaults"
+
+	return "127.0.0.1"
 }

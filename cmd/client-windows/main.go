@@ -37,7 +37,6 @@ func main() {
 	// 加载配置文件
 	cfg, err := config.LoadClient(*configPath)
 	if err != nil {
-		log.Printf("Warning: failed to load config: %v, using defaults", err)
 		cfg = config.DefaultClientConfig()
 	}
 
@@ -68,12 +67,6 @@ func main() {
 		cfg.Reconnect.Interval = *retryInterval
 	}
 
-	log.Printf("ShareSerial Windows Client v%s", version)
-	log.Printf("Server address: %s", cfg.ServerAddress())
-	log.Printf("Local TCP port: %d", *localPort)
-	log.Printf("Reconnect: enabled=%v, interval=%ds, max_retry=%d",
-		cfg.Reconnect.Enabled, cfg.Reconnect.Interval, cfg.Reconnect.MaxRetry)
-
 	// 创建本地代理
 	proxy := localproxy.NewLocalProxy(*localPort)
 
@@ -85,27 +78,28 @@ func main() {
 
 	// 等待连接成功
 	if err := connMgr.WaitForConnection(10 * time.Second); err != nil {
-		log.Fatalf("Failed to connect to server: %v", err)
+		log.Fatalf("[FAIL] 无法连接服务器: %v", err)
 	}
 
 	// 启动本地代理
 	conn := connMgr.GetConnection()
 	if err := proxy.Start(conn); err != nil {
 		connMgr.Stop()
-		log.Fatalf("Failed to start local proxy: %v", err)
+		log.Fatalf("[FAIL] 无法启动本地代理: %v", err)
 	}
 
-	log.Printf("Local TCP proxy started: localhost:%d", *localPort)
+	// 简洁的启动信息
+	log.Printf("========================================")
+	log.Printf("ShareSerial Client 已就绪")
+	log.Printf("========================================")
+	log.Printf("服务器: %s", cfg.ServerAddress())
+	log.Printf("本地端口: %d", *localPort)
+	log.Printf("========================================")
 	log.Printf("")
-	log.Printf("=== Connect with Putty ===")
-	log.Printf("  Connection type: Raw")
-	log.Printf("  Host Name: localhost")
-	log.Printf("  Port: %d", *localPort)
-	log.Printf("")
-	log.Printf("=== Or use Python ===")
-	log.Printf("  import socket")
-	log.Printf("  s = socket.socket()")
-	log.Printf("  s.connect(('localhost', %d))", *localPort)
+	log.Printf("MobaXterm 连接设置:")
+	log.Printf("  类型: Raw (不是 SSH)")
+	log.Printf("  主机: localhost")
+	log.Printf("  端口: %d", *localPort)
 	log.Printf("")
 
 	// 数据转发监控
@@ -117,13 +111,13 @@ func main() {
 
 	// 等待信号
 	<-sigChan
-	log.Println("Shutting down...")
+	log.Println("[INFO] 正在关闭...")
 
 	// 停止服务
 	proxy.Stop()
 	connMgr.Stop()
 
-	log.Println("Client stopped")
+	log.Println("[OK] Client 已停止")
 }
 
 // ConnectionManager 连接管理器（简化版重连）
@@ -155,7 +149,7 @@ func (cm *ConnectionManager) Start() {
 
 	// 初始连接
 	if err := cm.connect(); err != nil {
-		log.Printf("Initial connection failed: %v", err)
+		log.Printf("[WARN] 初次连接失败: %v", err)
 	}
 
 	// 后台重连
@@ -203,15 +197,15 @@ func (cm *ConnectionManager) reconnectLoop() {
 				// 尝试重连
 				retryCount++
 				if cm.maxRetry > 0 && retryCount > cm.maxRetry {
-					log.Printf("Max retry count reached: %d", cm.maxRetry)
+					log.Printf("[FAIL] 达到最大重试次数: %d", cm.maxRetry)
 					return
 				}
 
-				log.Printf("Reconnecting... (attempt %d)", retryCount)
+				log.Printf("[INFO] 重连中... (第 %d 次)", retryCount)
 				if err := cm.connect(); err != nil {
-					log.Printf("Reconnect failed: %v", err)
+					log.Printf("[WARN] 重连失败: %v", err)
 				} else {
-					log.Printf("Reconnected to server: %s", cm.serverAddr)
+					log.Printf("[OK] 已重连: %s", cm.serverAddr)
 					retryCount = 0
 				}
 			}
@@ -237,7 +231,7 @@ func (cm *ConnectionManager) WaitForConnection(timeout time.Duration) error {
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	return fmt.Errorf("timeout waiting for connection")
+	return fmt.Errorf("连接超时")
 }
 
 // GetConnection 获取当前连接
@@ -278,14 +272,7 @@ func monitorLoop(connMgr *ConnectionManager, proxy *localproxy.LocalProxy) {
 		if currentConn != lastConn && currentConn != nil {
 			proxy.UpdateRemoteConnection(currentConn)
 			lastConn = currentConn
-			log.Printf("Proxy updated with new connection")
-		}
-
-		// 输出状态
-		connCount := proxy.ConnectionCount()
-		if connCount > 0 {
-			log.Printf("Status: %d local connections, buffer: %d bytes",
-				connCount, proxy.BufferSize())
+			log.Printf("[INFO] 代理已更新")
 		}
 	}
 }
