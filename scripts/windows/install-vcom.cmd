@@ -7,19 +7,13 @@ echo ShareSerial Virtual COM Port Installer
 echo ========================================
 echo
 
-REM Pause at start to see output
-echo Press any key to continue...
-pause >nul
+pause
 
 echo Checking administrator privileges...
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo.
-    echo [ERROR] NOT running as Administrator!
-    echo.
-    echo Please right-click this file and select:
-    echo "Run as administrator"
-    echo.
+    echo [ERROR] NOT running as Administrator
+    echo Please right-click and "Run as administrator"
     pause
     exit /b 1
 )
@@ -27,101 +21,88 @@ if %errorlevel% neq 0 (
 echo [OK] Running as Administrator
 echo.
 
-REM Set com0com path
-set COM0COM_PATH=C:\Program Files (x86)\com0com
-
-REM Check if com0com exists
-if not exist "%COM0COM_PATH%\setupc.exe" (
-    set COM0COM_PATH=C:\Program Files\com0com
+REM Check com0com - try both possible paths
+set "COM0COM_PATH="
+if exist "C:\Program Files\com0com\setupc.exe" (
+    set "COM0COM_PATH=C:\Program Files\com0com"
+    goto :found
+)
+if exist "C:\Program Files (x86)\com0com\setupc.exe" (
+    set "COM0COM_PATH=C:\Program Files (x86)\com0com"
+    goto :found
 )
 
-if not exist "%COM0COM_PATH%\setupc.exe" (
-    echo.
-    echo [ERROR] com0com is NOT installed!
-    echo.
-    echo Please download and install com0com:
-    echo https://sourceforge.net/projects/com0com/
-    echo.
-    echo After installing com0com, run this script again.
-    echo.
-    pause
-    exit /b 1
-)
+echo [ERROR] com0com NOT installed
+echo Download: https://sourceforge.net/projects/com0com/
+pause
+exit /b 1
 
-echo [OK] com0com found at: %COM0COM_PATH%
+:found
+echo [OK] com0com found: %COM0COM_PATH%
 echo.
 
-REM Find free COM port (try COM4 to COM10)
-echo Finding available COM port...
-set VCOM=
-
-REM Check each COM port
-for %%p in (4 5 6 7 8 9 10) do (
-    mode COM%%p >nul 2>&1
-    if errorlevel 1 (
-        set VCOM=COM%%p
-        goto :port_found
-    )
+REM Find free COM port
+echo Finding available COM port (COM4-COM10)...
+set "VCOM=COM4"
+echo Trying COM4...
+mode COM4 >nul 2>&1
+if errorlevel 1 (
+    echo [OK] COM4 is free
+    goto :create
 )
 
-:port_found
-if "%VCOM%"=="" (
-    echo.
-    echo [ERROR] No free COM port found (COM4-COM10 all in use)
-    echo.
-    pause
-    exit /b 1
+set "VCOM=COM5"
+echo Trying COM5...
+mode COM5 >nul 2>&1
+if errorlevel 1 (
+    echo [OK] COM5 is free
+    goto :create
 )
 
-echo [OK] Free COM port found: %VCOM%
+set "VCOM=COM6"
+echo Trying COM6...
+mode COM6 >nul 2>&1
+if errorlevel 1 (
+    echo [OK] COM6 is free
+    goto :create
+)
+
+echo [ERROR] No free COM port found
+pause
+exit /b 1
+
+:create
 echo.
-
-REM Create virtual COM port
-echo Creating virtual COM port %VCOM% bridged to localhost:8888...
+echo Creating virtual COM port: %VCOM%
+echo Bridging to: localhost:8888
 echo.
 
 "%COM0COM_PATH%\setupc.exe" install PortName=%VCOM%,Tcp=127.0.0.1:8888
 
 if errorlevel 1 (
-    echo.
     echo [ERROR] Failed to create virtual COM port
-    echo.
-    echo Possible solutions:
-    echo 1. Reboot Windows and try again
-    echo 2. Check if COM port is already in use
-    echo.
+    echo Try rebooting and running again
     pause
     exit /b 1
 )
 
 echo.
-echo [OK] Virtual COM port created successfully!
+echo [OK] Virtual COM port created!
 echo.
 
-REM List current configuration
-echo Current configuration:
+echo Current com0com configuration:
 "%COM0COM_PATH%\setupc.exe" list
+echo.
 
-echo.
 echo ========================================
-echo Installation Complete!
+echo SUCCESS! Virtual COM Port Installed
 echo ========================================
 echo.
-echo Virtual COM Port: %VCOM%
-echo Bridges to: localhost:8888
+echo COM Port: %VCOM%
+echo Bridge: localhost:8888
 echo.
-echo ========================================
 echo NEXT STEPS:
-echo ========================================
-echo.
-echo 1. Start ShareSerial Client:
-echo    shareserial-client-windows.exe --server 192.168.246.17:7700 --local-port 8888
-echo.
-echo 2. Open MobaXterm, create new Session:
-echo    Type: Serial
-echo    Port: %VCOM%
-echo    Speed: 115200
-echo.
-echo ========================================
+echo 1. Run: shareserial-client-windows.exe --server 192.168.246.17:7700 --local-port 8888
+echo 2. MobaXterm: Serial, Port %VCOM%, Speed 115200
 echo.
 pause
